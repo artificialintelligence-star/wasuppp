@@ -1,0 +1,200 @@
+#include <iostream>
+#include <limits>
+using namespace std;
+
+const int SIZE = 3;
+char board[SIZE][SIZE] = {
+    { '_', '_', '_' },
+    { '_', '_', '_' },
+    { '_', '_', '_' }
+};
+
+
+const char HUMAN = 'X';
+const char AI = 'O';
+
+struct Move {
+    int row, col;
+};
+
+// Function declarations
+void printBoard();
+bool isMovesLeft();
+int evaluate();
+int minimax(int depth, bool isMax, int alpha, int beta);
+Move findBestMove();
+bool isGameOver();
+void humanMove();
+
+int main() {
+    cout << "Tic Tac Toe - You are 'X', AI is 'O'\n";
+    cout << "Positions are numbered 1-9 like a phone keypad:\n";
+    cout << "1 | 2 | 3\n";
+    cout << "---------\n";
+    cout << "4 | 5 | 6\n";
+    cout << "---------\n";
+    cout << "7 | 8 | 9\n\n";
+    
+    printBoard();
+
+    while (true) {
+        // Human Move
+        humanMove();
+        printBoard();
+        if (isGameOver()) break;
+
+        // AI Move
+        cout << "AI is making a move...\n";
+        Move bestMove = findBestMove();
+        board[bestMove.row][bestMove.col] = AI;
+        printBoard();
+        if (isGameOver()) break;
+    }
+
+    return 0;
+}
+
+void printBoard() {
+    cout << "Current Board:\n";
+    for (int i = 0; i < SIZE; ++i) {
+        for (int j = 0; j < SIZE; ++j) {
+            cout << board[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
+
+bool isMovesLeft() {
+    for (int i = 0; i < SIZE; ++i)
+        for (int j = 0; j < SIZE; ++j)
+            if (board[i][j] == '_')
+                return true;
+    return false;
+}
+
+int evaluate() {
+    // Rows
+    for (int i = 0; i < SIZE; ++i) {
+        if (board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
+            if (board[i][0] == AI) return 10;
+            else if (board[i][0] == HUMAN) return -10;
+        }
+    }
+
+    // Columns
+    for (int j = 0; j < SIZE; ++j) {
+        if (board[0][j] == board[1][j] && board[1][j] == board[2][j]) {
+            if (board[0][j] == AI) return 10;
+            else if (board[0][j] == HUMAN) return -10;
+        }
+    }
+
+    // Diagonals
+    if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
+        if (board[0][0] == AI) return 10;
+        else if (board[0][0] == HUMAN) return -10;
+    }
+
+    if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
+        if (board[0][2] == AI) return 10;
+        else if (board[0][2] == HUMAN) return -10;
+    }
+
+    return 0;
+}
+
+int minimax(int depth, bool isMax, int alpha, int beta) {
+    int score = evaluate();
+
+    if (score == 10 || score == -10) return score;
+    if (!isMovesLeft()) return 0;
+
+    if (isMax) {
+        int best = numeric_limits<int>::min();
+        for (int i = 0; i < SIZE; ++i) {
+            for (int j = 0; j < SIZE; ++j) {
+                if (board[i][j] == '_') {
+                    board[i][j] = AI;
+                    best = max(best, minimax(depth + 1, false, alpha, beta));
+                    board[i][j] = '_';
+                    alpha = max(alpha, best);
+                    if (beta <= alpha)
+                        return best;
+                }
+            }
+        }
+        return best;
+    } else {
+        int best = numeric_limits<int>::max();
+        for (int i = 0; i < SIZE; ++i) {
+            for (int j = 0; j < SIZE; ++j) {
+                if (board[i][j] == '_') {
+                    board[i][j] = HUMAN;
+                    best = min(best, minimax(depth + 1, true, alpha, beta));
+                    board[i][j] = '_';
+                    beta = min(beta, best);
+                    if (beta <= alpha)
+                        return best;
+                }
+            }
+        }
+        return best;
+    }
+}
+
+Move findBestMove() {
+    int bestVal = numeric_limits<int>::min();
+    Move bestMove = {-1, -1};
+
+    for (int i = 0; i < SIZE; ++i) {
+        for (int j = 0; j < SIZE; ++j) {
+            if (board[i][j] == '_') {
+                board[i][j] = AI;
+                int moveVal = minimax(0, false, numeric_limits<int>::min(), numeric_limits<int>::max());
+                board[i][j] = '_';
+
+                if (moveVal > bestVal) {
+                    bestMove.row = i;
+                    bestMove.col = j;
+                    bestVal = moveVal;
+                }
+            }
+        }
+    }
+
+    return bestMove;
+}
+
+bool isGameOver() {
+    int score = evaluate();
+    if (score == 10) {
+        cout << "AI Wins! 😎\n";
+        return true;
+    } else if (score == -10) {
+        cout << "You Win! 🎉\n";
+        return true;
+    } else if (!isMovesLeft()) {
+        cout << "It's a Draw! 🤝\n";
+        return true;
+    }
+    return false;
+}
+
+void humanMove() {
+    int position;
+    while (true) {
+        cout << "Enter position (1-9): ";
+        cin >> position;
+        
+        // Convert position (1-9) to row and column (0-2)
+        int row = (position - 1) / SIZE;
+        int col = (position - 1) % SIZE;
+        
+        if (position >= 1 && position <= 9 && board[row][col] == '_') {
+            board[row][col] = HUMAN;
+            break;
+        }
+        cout << "Invalid move. Try again.\n";
+    }
+}
