@@ -1,0 +1,126 @@
+#include <iostream>
+#include <stack>
+#include <set>
+#include <map>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct State {
+    int a, b;
+
+    // Default constructor initializes both jars to 0.
+    State() : a(0), b(0) {}
+
+    // Parameterized constructor initializes jars to specific values.
+    State(int _a, int _b) : a(_a), b(_b) {}
+
+    // Checks if two states are equal (used for set operations).
+    bool operator==(const State &other) const {
+        return a == other.a && b == other.b;
+    }
+
+    // Compares two states (used for map and set sorting).
+    bool operator<(const State &other) const {
+        return std::tie(a, b) < std::tie(other.a, other.b);
+    }
+};
+
+int JAR_A_CAPACITY, JAR_B_CAPACITY, TARGET;
+
+// Generates all possible next states from the current state.
+vector<State> generateNextStates(const State& current) {
+    int a = current.a, b = current.b;
+    vector<State> nextStates;
+
+    // Fill Jar A
+    nextStates.emplace_back(JAR_A_CAPACITY, b);
+
+    // Fill Jar B
+    nextStates.emplace_back(a, JAR_B_CAPACITY);
+
+    // Empty Jar A
+    nextStates.emplace_back(0, b);
+
+    // Empty Jar B
+    nextStates.emplace_back(a, 0);
+
+    // Pour from A to B
+    int pourToB = min(a, JAR_B_CAPACITY - b);
+    nextStates.emplace_back(a - pourToB, b + pourToB);
+
+    // Pour from B to A
+    int pourToA = min(b, JAR_A_CAPACITY - a);
+    nextStates.emplace_back(a + pourToA, b - pourToA);
+
+    return nextStates;
+}
+
+// Prints the solution path from start to the goal state.
+void printSolution(State goal, map<State, State>& parent) {
+    vector<State> path;
+    State current = goal;
+
+    // Trace back from goal to the initial state using the parent map.
+    while (parent.find(current) != parent.end()) {
+        path.push_back(current);
+        current = parent[current];
+    }
+    path.push_back(current);
+    reverse(path.begin(), path.end());
+
+    // Display the path.
+    cout << "Solution found! Steps to achieve the goal:\n";
+    for (const auto& state : path) {
+        cout << "(" << state.a << ", " << state.b << ")\n";
+    }
+}
+
+// Depth-First Search (DFS) implementation to solve the Water Jar Problem.
+void solveWaterJarProblem() {
+    stack<State> s;                // Stack for DFS traversal
+    set<State> visited;            // To track visited states
+    map<State, State> parent;      // To store the path
+
+    // Starting state (0, 0)
+    State initialState(0, 0);
+    s.push(initialState);
+    visited.insert(initialState);
+
+    while (!s.empty()) {
+        State current = s.top();
+        s.pop();
+
+        // Check if we have reached the target
+        if (current.a == TARGET || current.b == TARGET) {
+            printSolution(current, parent);
+            return;
+        }
+
+        // Generate all possible next states
+        vector<State> nextStates = generateNextStates(current);
+        for (const auto& next : nextStates) {
+            if (visited.find(next) == visited.end()) {
+                s.push(next);
+                visited.insert(next);
+                parent[next] = current;
+            }
+        }
+    }
+
+    cout << "No solution found.\n";
+}
+
+int main() {
+    // Taking user input for capacities and target
+    cout << "Enter the capacity of Jar A: ";
+    cin >> JAR_A_CAPACITY;
+    cout << "Enter the capacity of Jar B: ";
+    cin >> JAR_B_CAPACITY;
+    cout << "Enter the target amount of water: ";
+    cin >> TARGET;
+
+    // Solve the problem
+    solveWaterJarProblem();
+    return 0;
+}
