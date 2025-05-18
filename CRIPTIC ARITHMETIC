@@ -1,0 +1,127 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+
+// Helper function to get unique characters from all input words
+set<char> getUniqueChars(const vector<string>& words) {
+    set<char> unique;
+    for (const string& word : words) {
+        for (char c : word) {
+            unique.insert(c);
+        }
+    }
+    return unique;
+}
+
+// Convert word to number using current letter-digit mapping
+long wordToNumber(const string& word, const map<char, int>& mapping) {
+    long num = 0;
+    for (char c : word) {
+        num = num * 10 + mapping.at(c);
+    }
+    return num;
+}
+
+bool isValid(const vector<string>& words, const string& result, const vector<char>& letters, const vector<int>& digits) {
+    map<char, int> mapping;
+    for (int i = 0; i < letters.size(); ++i) {
+        mapping[letters[i]] = digits[i];
+    }
+
+    // Check leading letters (can't be zero)
+    for (const string& word : words) {
+        if (mapping[word[0]] == 0) return false;
+    }
+    if (mapping[result[0]] == 0) return false;
+
+    long sum = 0;
+    for (const string& word : words) {
+        sum += wordToNumber(word, mapping);
+    }
+
+    long resultValue = wordToNumber(result, mapping);
+
+    return sum == resultValue;
+}
+
+void solveCryptArithmetic(const vector<string>& words, const string& result) {
+    set<char> uniqueChars = getUniqueChars(words);
+    for (char c : result) uniqueChars.insert(c);
+
+    // Convert set to vector for permutation
+    vector<char> letters(uniqueChars.begin(), uniqueChars.end());
+
+    if (letters.size() > 10) {
+        cout << "Too many unique letters (max 10 allowed)." << endl;
+        return;
+    }
+
+    vector<int> digits = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    bool found = false;
+    do {
+        vector<int> currentDigits(digits.begin(), digits.begin() + letters.size());
+
+        if (isValid(words, result, letters, currentDigits)) {
+            found = true;
+            map<char, int> solution;
+            for (int i = 0; i < letters.size(); ++i) {
+                solution[letters[i]] = currentDigits[i];
+            }
+
+            // Output solution
+            cout << "\n✅ Solution found:\n";
+            for (const string& word : words) {
+                cout << word << " = " << wordToNumber(word, solution) << endl;
+            }
+            cout << result << " = " << wordToNumber(result, solution) << endl;
+
+            cout << "\nLetter Mapping:\n";
+            for (auto [ch, val] : solution) {
+                cout << ch << " = " << val << endl;
+            }
+
+            break; // remove this if you want all possible solutions
+        }
+    } while (next_permutation(digits.begin(), digits.end()));
+
+    if (!found) {
+        cout << "❌ No solution found.\n";
+    }
+}
+
+int main() {
+    int n;
+    vector<string> words;
+    string result;
+
+    cout << "Enter number of words to sum: ";
+    cin >> n;
+
+    cout << "Enter the words (uppercase letters only):\n";
+    for (int i = 0; i < n; ++i) {
+        string word;
+        cin >> word;
+        words.push_back(word);
+    }
+
+    cout << "Enter the result word: ";
+    cin >> result;
+
+    solveCryptArithmetic(words, result);
+
+    return 0;
+}
+
+
+INPUT:
+Enter number of words to sum: 2
+Enter the words (uppercase letters only):
+SEND
+MORE
+Enter the result word: MONEY
