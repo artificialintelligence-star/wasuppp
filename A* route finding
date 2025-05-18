@@ -1,0 +1,120 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int>> grid;
+int rows, cols;
+
+int directions[4][2] = {{1,0},{0,1},{-1,0},{0,-1}};
+
+bool isValid(int x, int y) {
+    return x >= 0 && y >= 0 && x < rows && y < cols;
+}
+
+int heuristic(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+vector<pair<int,int>> findPath(int startX, int startY, int goalX, int goalY) {
+    auto cmp = [](const vector<int>& a, const vector<int>& b) {
+        return a[0] > b[0]; // Compare by f cost
+    };
+
+    priority_queue<vector<int>, vector<vector<int>>, decltype(cmp)> openList(cmp);
+    vector<vector<bool>> closed(rows, vector<bool>(cols, false));
+    vector<vector<pair<int, int>>> parent(rows, vector<pair<int, int>>(cols, {-1, -1}));
+    vector<vector<int>> gCost(rows, vector<int>(cols, INT_MAX));
+
+    gCost[startX][startY] = 0;
+    int h = heuristic(startX, startY, goalX, goalY);
+    openList.push({h, 0, h, startX, startY, -1, -1});
+
+    while (!openList.empty()) {
+        auto current = openList.top();
+        openList.pop();
+        int x = current[3], y = current[4];
+
+        if (x == goalX && y == goalY) {
+            vector<pair<int,int>> path;
+            while (x != -1 && y != -1) {
+                path.push_back({x, y});
+                auto p = parent[x][y];
+                x = p.first;
+                y = p.second;
+            }
+            reverse(path.begin(), path.end());
+            return path;
+        }
+
+        if (closed[x][y]) continue;
+        closed[x][y] = true;
+
+        for (auto dir : directions) {
+            int newX = x + dir[0];
+            int newY = y + dir[1];
+            if (!isValid(newX, newY) || grid[newX][newY] == 1 || closed[newX][newY])
+                continue;
+
+            int newG = gCost[x][y] + 1;
+            int newH = heuristic(newX, newY, goalX, goalY);
+            int newF = newG + newH;
+
+            if (newG < gCost[newX][newY]) {
+                gCost[newX][newY] = newG;
+                parent[newX][newY] = {x, y};
+                openList.push({newF, newG, newH, newX, newY, x, y});
+            }
+        }
+    }
+    return {}; // No path found
+}
+
+int main() {
+    cout << "Enter number of rows and columns: ";
+    cin >> rows >> cols;
+
+    grid.resize(rows, vector<int>(cols));
+    cout << "Enter the grid (0 = open, 1 = wall):" << endl;
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j)
+            cin >> grid[i][j];
+
+    int startX, startY, goalX, goalY;
+    cout << "Enter start position (x y): ";
+    cin >> startX >> startY;
+
+    cout << "Enter goal position (x y): ";
+    cin >> goalX >> goalY;
+
+    if (!isValid(startX, startY) || !isValid(goalX, goalY) || grid[startX][startY] == 1 || grid[goalX][goalY] == 1) {
+        cout << "Invalid start or goal position.\n";
+        return 1;
+    }
+
+    vector<pair<int, int>> path = findPath(startX, startY, goalX, goalY);
+
+    if (!path.empty()) {
+        cout << "Path found:\n";
+        for (auto p : path) {
+            cout << "(" << p.first << ", " << p.second << ")\n";
+        }
+    } else {
+        cout << "No path found.\n";
+    }
+
+    return 0;
+}
+
+
+Enter number of rows and columns: 3 3
+Enter the grid (0 = open, 1 = wall):
+0 0 0
+1 1 0
+0 0 0
+Enter start position (x y): 0 0
+Enter goal position (x y): 2 2
