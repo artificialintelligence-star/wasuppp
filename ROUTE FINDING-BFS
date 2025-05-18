@@ -1,0 +1,104 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Node {
+    int x, y;
+    Node* parent;
+
+    Node(int _x, int _y, Node* _parent = nullptr) : x(_x), y(_y), parent(_parent) {}
+};
+
+int rows, cols;
+vector<vector<int>> grid;
+int directions[4][2] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+
+bool isValid(int x, int y) {
+    return x >= 0 && y >= 0 && x < rows && y < cols;
+}
+
+vector<Node*> reconstructPath(Node* node) {
+    vector<Node*> path;
+    while (node != nullptr) {
+        path.push_back(node);
+        node = node->parent;
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+vector<Node*> bfs(Node start, Node goal) {
+    vector<vector<bool>> visited(rows, vector<bool>(cols, false));
+    queue<Node*> q;
+
+    Node* startNode = new Node(start.x, start.y);
+    q.push(startNode);
+    visited[start.x][start.y] = true;
+
+    while (!q.empty()) {
+        Node* current = q.front();
+        q.pop();
+
+        if (current->x == goal.x && current->y == goal.y) {
+            return reconstructPath(current);
+        }
+
+        for (auto& dir : directions) {
+            int newX = current->x + dir[0];
+            int newY = current->y + dir[1];
+
+            if (isValid(newX, newY) && grid[newX][newY] == 0 && !visited[newX][newY]) {
+                visited[newX][newY] = true;
+                Node* neighbor = new Node(newX, newY, current);
+                q.push(neighbor);
+            }
+        }
+    }
+
+    return vector<Node*>();
+}
+
+int main() {
+    cout << "Enter number of rows and columns: ";
+    cin >> rows >> cols;
+
+    grid.resize(rows, vector<int>(cols));
+    cout << "Enter the grid (0 = open, 1 = wall):\n";
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j)
+            cin >> grid[i][j];
+
+    int startX, startY, goalX, goalY;
+    cout << "Enter start position (x y): ";
+    cin >> startX >> startY;
+    cout << "Enter goal position (x y): ";
+    cin >> goalX >> goalY;
+
+    Node start(startX, startY);
+    Node goal(goalX, goalY);
+
+    vector<Node*> path = bfs(start, goal);
+
+    if (!path.empty()) {
+        cout << "Path found:\n";
+        for (auto node : path) {
+            cout << "(" << node->x << ", " << node->y << ")\n";
+        }
+    } else {
+        cout << "No path found.\n";
+    }
+
+    return 0;
+}
+
+
+Enter number of rows and columns: 3 3
+Enter the grid (0 = open, 1 = wall):
+0 0 0
+1 1 0
+0 0 0
+Enter start position (x y): 0 0
+Enter goal position (x y): 2 2
