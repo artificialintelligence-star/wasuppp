@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+const int MAX = 20; // Max board size
+char board[MAX][MAX]; // 2D board
+
+int n;
+
+// Function to check if it's safe to place a queen at board[row][col]
+bool isSafe(int row, int col) {
+    // Check vertical column
+    for (int i = 0; i < row; i++)
+        if (board[i][col] == 'Q')
+            return false;
+
+    // Check upper left diagonal
+    for (int i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
+        if (board[i][j] == 'Q')
+            return false;
+
+    // Check upper right diagonal
+    for (int i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++)
+        if (board[i][j] == 'Q')
+            return false;
+
+    return true;
+}
+
+// Recursive backtracking function to solve N-Queens
+bool solveNQueens(int row) {
+    if (row == n) {
+        // All queens placed successfully
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++)
+                cout << board[i][j] << " ";
+            cout << endl;
+        }
+        cout << endl;
+        return true; // return true to stop at first solution
+    }
+
+    for (int col = 0; col < n; col++) {
+        if (isSafe(row, col)) {
+            board[row][col] = 'Q';
+            if (solveNQueens(row + 1))
+                return true;
+            board[row][col] = '.'; // Backtrack
+        }
+    }
+    return false;
+}
+
+int main() {
+    cout << "Enter the number of queens: ";
+    cin >> n;
+
+    // Initialize the board with dots
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            board[i][j] = '.';
+
+    if (!solveNQueens(0))
+        cout << "No solution exists.\n";
+
+    return 0;
+}
