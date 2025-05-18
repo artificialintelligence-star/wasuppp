@@ -1,0 +1,176 @@
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <stdexcept>
+
+using namespace std;
+
+const int SIZE = 3;
+
+// Magic square values for the board cells (used for win logic)
+const int MAGIC_SQUARE[SIZE][SIZE] = {
+    {8, 1, 6},
+    {3, 5, 7},
+    {4, 9, 2}
+};
+
+// Mapping from user input cell (1-9) to magic square number
+const int POSITION_TO_MAGIC[9] = {8, 1, 6, 3, 5, 7, 4, 9, 2};
+
+char board[SIZE][SIZE] = { {' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '} };
+bool usedNumbers[10] = { false }; // Tracks numbers 1-9 based on magic numbers
+vector<int> player1Moves;
+vector<int> computerMoves;
+
+// Function declarations
+void printBoard();
+int* findPosition(int number);
+bool checkWin(const vector<int>& moves);
+int calculateComputerMove();
+bool canFormWinningCombination(const vector<int>& moves, int number);
+
+int main() {
+    srand(time(0));
+    bool gameWon = false;
+    int moves = 0;
+
+    cout << "Welcome to Tic Tac Toe with AI!" << endl;
+    printBoard();
+
+    while (moves < 9 && !gameWon) {
+        if (moves % 2 == 0) {
+            // Player 1 move
+            cout << "Player 1 (X), enter a cell number (1-9): ";
+            int cell;  // Cell number 1-9
+            cin >> cell;
+
+            if (cell < 1 || cell > 9) {
+                cout << "Invalid move. Try again." << endl;
+                continue;
+            }
+
+            int magicNumber = POSITION_TO_MAGIC[cell - 1];
+
+            if (usedNumbers[magicNumber]) {
+                cout << "Cell already used. Try again." << endl;
+                continue;
+            }
+
+            usedNumbers[magicNumber] = true;
+            player1Moves.push_back(magicNumber);
+
+            // Update board using user cell number
+            int row = (cell - 1) / SIZE;
+            int col = (cell - 1) % SIZE;
+            board[row][col] = 'X';
+            printBoard();
+
+            if (checkWin(player1Moves)) {
+                cout << "Player 1 (X) wins!" << endl;
+                gameWon = true;
+                break;
+            }
+        } else {
+            // Computer move
+            cout << "Computer (O) is making its move..." << endl;
+            int computerMove = calculateComputerMove();
+            usedNumbers[computerMove] = true;
+            computerMoves.push_back(computerMove);
+
+            // Find board position from magic number
+            int* pos = findPosition(computerMove);
+            board[pos[0]][pos[1]] = 'O';
+            printBoard();
+
+            if (checkWin(computerMoves)) {
+                cout << "Computer (O) wins!" << endl;
+                gameWon = true;
+                break;
+            }
+        }
+        moves++;
+    }
+
+    if (!gameWon) {
+        cout << "It's a draw!" << endl;
+    }
+
+    return 0;
+}
+
+void printBoard() {
+    cout << "---------" << endl;
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            cout << "|" << board[i][j];
+        }
+        cout << "|" << endl;
+        cout << "---------" << endl;
+    }
+}
+
+int* findPosition(int number) {
+    static int pos[2];
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (MAGIC_SQUARE[i][j] == number) {
+                pos[0] = i;
+                pos[1] = j;
+                return pos;
+            }
+        }
+    }
+    throw invalid_argument("Invalid number in findPosition");
+}
+
+bool checkWin(const vector<int>& moves) {
+    int targetSum = 15;
+    int n = moves.size();
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            for (int k = j + 1; k < n; k++) {
+                if (moves[i] + moves[j] + moves[k] == targetSum) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool canFormWinningCombination(const vector<int>& moves, int number) {
+    int targetSum = 15;
+    int n = moves.size();
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (moves[i] + moves[j] + number == targetSum) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int calculateComputerMove() {
+    // Try to win
+    for (int number = 1; number <= 9; number++) {
+        if (!usedNumbers[number] && canFormWinningCombination(computerMoves, number)) {
+            return number;
+        }
+    }
+
+    // Try to block player
+    for (int number = 1; number <= 9; number++) {
+        if (!usedNumbers[number] && canFormWinningCombination(player1Moves, number)) {
+            return number;
+        }
+    }
+
+    // Pick random available number
+    int number;
+    do {
+        number = rand() % 9 + 1;
+    } while (usedNumbers[number]);
+    return number;
+}
