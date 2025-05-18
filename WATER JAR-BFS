@@ -1,0 +1,151 @@
+#include <iostream>
+#include <queue>
+#include <set>
+#include <map>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+/*
+    State represents the current amount of water in Jar A and Jar B.
+*/
+struct State {
+    int a, b;
+
+    // Default constructor initializes both jars to 0.
+    State() : a(0), b(0) {}
+
+    // Parameterized constructor initializes jars to specified values.
+    State(int x, int y) : a(x), b(y) {}
+
+    // Operator overload for comparison (used in sets and maps).
+    bool operator<(const State& other) const {
+        if (a == other.a)
+            return b < other.b;
+        return a < other.a;
+    }
+
+    bool operator==(const State& other) const {
+        return a == other.a && b == other.b;
+    }
+};
+
+// Global variables to store the capacities of the jars and the target amount.
+int JAR_A_CAPACITY, JAR_B_CAPACITY, TARGET;
+
+/*
+    generateNextStates generates all possible states from the current state:
+    - Fill Jar A completely
+    - Fill Jar B completely
+    - Empty Jar A
+    - Empty Jar B
+    - Pour water from Jar A to Jar B
+    - Pour water from Jar B to Jar A
+*/
+vector<State> generateNextStates(const State& current) {
+    int a = current.a, b = current.b;
+    vector<State> nextStates;
+
+    // Fill Jar A to its maximum capacity
+    nextStates.emplace_back(JAR_A_CAPACITY, b);
+    
+    // Fill Jar B to its maximum capacity
+    nextStates.emplace_back(a, JAR_B_CAPACITY);
+
+    // Empty Jar A completely
+    nextStates.emplace_back(0, b);
+
+    // Empty Jar B completely
+    nextStates.emplace_back(a, 0);
+
+    // Pour water from A to B (without overflowing B)
+    int pourToB = min(a, JAR_B_CAPACITY - b);
+    nextStates.emplace_back(a - pourToB, b + pourToB);
+
+    // Pour water from B to A (without overflowing A)
+    int pourToA = min(b, JAR_A_CAPACITY - a);
+    nextStates.emplace_back(a + pourToA, b - pourToA);
+
+    return nextStates;
+}
+
+/*
+    printSolution backtracks from the goal state to the initial state using the 'parent' map,
+    and prints the path (steps) taken to reach the target.
+*/
+void printSolution(State goal, map<State, State>& parent) {
+    vector<State> path;
+    State current = goal;
+
+    // Traverse back from the goal to the start using the parent map.
+    while (true) {
+        path.push_back(current);
+        if (parent.find(current) == parent.end()) break;
+        current = parent[current];
+    }
+
+    // Reverse the path to display from start to goal.
+    reverse(path.begin(), path.end());
+
+    // Display the solution path.
+    cout << "Solution found! Steps to reach the goal:\n";
+    for (auto& state : path) {
+        cout << "(" << state.a << ", " << state.b << ")\n";
+    }
+}
+
+/*
+    solveWaterJarProblem performs a BFS (Breadth-First Search) to explore all possible
+    states starting from (0, 0) and tries to find a path to reach the target amount.
+*/
+void solveWaterJarProblem() {
+    queue<State> q;                  // Queue for BFS
+    set<State> visited;              // To track visited states
+    map<State, State> parent;        // To store the path
+
+    // Start from the initial state (0, 0)
+    State initialState(0, 0);
+    q.push(initialState);
+    visited.insert(initialState);
+
+    // BFS Loop
+    while (!q.empty()) {
+        State current = q.front();
+        q.pop();
+
+        // If we have reached the target in either jar, print the solution path
+        if (current.a == TARGET || current.b == TARGET) {
+            printSolution(current, parent);
+            return;
+        }
+
+        // Generate all possible next states
+        vector<State> nextStates = generateNextStates(current);
+        for (auto& next : nextStates) {
+            // If the next state is not visited, add it to the queue and mark it visited
+            if (visited.find(next) == visited.end()) {
+                visited.insert(next);
+                q.push(next);
+                parent[next] = current;  // Store the path
+            }
+        }
+    }
+
+    // If we exit the loop, no solution was found
+    cout << "No solution found.\n";
+}
+
+int main() {
+    // Take user inputs for capacities and the target
+    cout << "Enter the capacity of Jar A: ";
+    cin >> JAR_A_CAPACITY;
+    cout << "Enter the capacity of Jar B: ";
+    cin >> JAR_B_CAPACITY;
+    cout << "Enter the target amount of water: ";
+    cin >> TARGET;
+
+    cout << "\nWater Jar Problem using BFS\n";
+    solveWaterJarProblem();
+    return 0;
+}
