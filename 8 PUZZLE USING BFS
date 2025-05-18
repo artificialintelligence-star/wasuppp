@@ -1,0 +1,177 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+#include <map>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 3;
+
+vector<vector<int>> goalBoard(N, vector<int>(N));
+
+struct PuzzleState {
+    vector<vector<int>> board;
+    int cost;
+    PuzzleState* parent;
+
+    PuzzleState(vector<vector<int>> b, PuzzleState* p) {
+        board = b;
+        parent = p;
+        cost = calculateHeuristic();
+    }
+
+    int calculateHeuristic() {
+        int distance = 0;
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                if (board[i][j] != 0) {
+                    int value = board[i][j];
+                    for (int m = 0; m < N; ++m) {
+                        for (int n = 0; n < N; ++n) {
+                            if (goalBoard[m][n] == value) {
+                                distance += abs(i - m) + abs(j - n);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return distance;
+    }
+
+    bool isGoal() const {
+        return board == goalBoard;
+    }
+
+    string boardToString() const {
+        string s;
+        for (auto& row : board) {
+            for (int num : row) {
+                s += to_string(num);
+            }
+        }
+        return s;
+    }
+
+    void printBoard() const {
+        for (auto& row : board) {
+            for (int num : row) {
+                cout << num << " ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+};
+
+// Comparator for priority queue (min-heap based on heuristic cost)
+struct Compare {
+    bool operator()(PuzzleState* a, PuzzleState* b) {
+        return a->cost > b->cost;
+    }
+};
+
+// Generate successors (moves
+vector<PuzzleState*> generateSuccessors(PuzzleState* current) {
+    vector<PuzzleState*> successors;
+    vector<vector<int>> board = current->board;
+
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+    int zeroX = -1, zeroY = -1;
+
+    // Locate the empty tile (0)
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            if (board[i][j] == 0) {
+                zeroX = i;
+                zeroY = j;
+                break;
+            }
+
+    for (int k = 0; k < 4; ++k) {
+        int newX = zeroX + dx[k];
+        int newY = zeroY + dy[k];
+
+        if (newX >= 0 && newX < N && newY >= 0 && newY < N) {
+            vector<vector<int>> newBoard = board;
+            swap(newBoard[zeroX][zeroY], newBoard[newX][newY]);
+            successors.push_back(new PuzzleState(newBoard, current));
+        }
+    }
+
+    return successors;
+}
+
+// Print solution path
+void printSolutionPath(PuzzleState* state) {
+    vector<PuzzleState*> path;
+    while (state != nullptr) {
+        path.push_back(state);
+        state = state->parent;
+    }
+    reverse(path.begin(), path.end());
+
+    cout << "Solution steps:" << endl;
+    for (auto* step : path) {
+        step->printBoard();
+    }
+}
+
+// Solve the puzzle
+void solve(vector<vector<int>>& initialBoard) {
+    priority_queue<PuzzleState*, vector<PuzzleState*>, Compare> openList;
+    set<string> visited;
+
+    PuzzleState* startState = new PuzzleState(initialBoard, nullptr);
+    openList.push(startState);
+    visited.insert(startState->boardToString());
+
+    while (!openList.empty()) {
+        PuzzleState* current = openList.top();
+        openList.pop();
+
+        current->printBoard();
+
+        if (current->isGoal()) {
+            cout << "Goal state reached!" << endl;
+            printSolutionPath(current);
+            return;
+        }
+
+        vector<PuzzleState*> neighbors = generateSuccessors(current);
+        for (PuzzleState* neighbor : neighbors) {
+            string key = neighbor->boardToString();
+            if (visited.find(key) == visited.end()) {
+                openList.push(neighbor);
+                visited.insert(key);
+            } else {
+                delete neighbor; // cleanup unused state
+            }
+        }
+    }
+
+    cout << "No solution found." << endl;
+}
+
+// Main function
+int main() {
+    vector<vector<int>> initialBoard(N, vector<int>(N));
+
+    cout << "Enter the initial board (3x3):" << endl;
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            cin >> initialBoard[i][j];
+
+    cout << "Enter the goal board (3x3):" << endl;
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            cin >> goalBoard[i][j];
+
+    solve(initialBoard);
+
+    return 0;
+}
