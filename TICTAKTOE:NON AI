@@ -1,0 +1,140 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int brk = 0;
+vector<char> row1 = {'_', '_', '_'};
+vector<char> row2 = {'_', '_', '_'};
+vector<char> row3 = {'_', '_', '_'};
+
+int trywin(vector<char>& chars) {
+    if (chars.at(0) == 'X' && chars.at(1) == 'X' && chars.at(2) == 'X') {
+        cout << "You win!" << endl;
+        brk = 1;
+        return 1;
+    }
+    if (chars.at(0) == 'O' && chars.at(1) == 'O' && chars.at(2) == 'O') {
+        cout << "Computer wins!" << endl;
+        brk = 1;
+        return 1;
+    }
+
+    // Computer tries to win
+    if (chars.at(0) == 'O' && chars.at(1) == 'O' && chars.at(2) == '_') {
+        chars.at(2) = 'O'; brk = 1; cout << "Computer wins!" << endl; return 1;
+    }
+    if (chars.at(0) == 'O' && chars.at(1) == '_' && chars.at(2) == 'O') {
+        chars.at(1) = 'O'; brk = 1; cout << "Computer wins!" << endl; return 1;
+    }
+    if (chars.at(0) == '_' && chars.at(1) == 'O' && chars.at(2) == 'O') {
+        chars.at(0) = 'O'; brk = 1; cout << "Computer wins!" << endl; return 1;
+    }
+
+    // Blocking the player
+    if (chars.at(0) == 'X' && chars.at(1) == 'X' && chars.at(2) == '_') {
+        chars.at(2) = 'O'; return 1;
+    }
+    if (chars.at(0) == 'X' && chars.at(1) == '_' && chars.at(2) == 'X') {
+        chars.at(1) = 'O'; return 1;
+    }
+    if (chars.at(0) == '_' && chars.at(1) == 'X' && chars.at(2) == 'X') {
+        chars.at(0) = 'O'; return 1;
+    }
+
+    return 0;
+}
+
+void analyse() {
+    int played = 0;
+    int win = 0;
+    vector<char> chars;
+
+    // Rows
+    chars = {row1.at(0), row1.at(1), row1.at(2)};
+    if ((win = trywin(chars))) { row1 = chars; return; }
+
+    chars = {row2.at(0), row2.at(1), row2.at(2)};
+    if ((win = trywin(chars))) { row2 = chars; return; }
+
+    chars = {row3.at(0), row3.at(1), row3.at(2)};
+    if ((win = trywin(chars))) { row3 = chars; return; }
+
+    // Columns
+    chars = {row1.at(0), row2.at(0), row3.at(0)};
+    if ((win = trywin(chars))) { row1.at(0) = chars[0]; row2.at(0) = chars[1]; row3.at(0) = chars[2]; return; }
+
+    chars = {row1.at(1), row2.at(1), row3.at(1)};
+    if ((win = trywin(chars))) { row1.at(1) = chars[0]; row2.at(1) = chars[1]; row3.at(1) = chars[2]; return; }
+
+    chars = {row1.at(2), row2.at(2), row3.at(2)};
+    if ((win = trywin(chars))) { row1.at(2) = chars[0]; row2.at(2) = chars[1]; row3.at(2) = chars[2]; return; }
+
+    // Diagonals
+    chars = {row1.at(0), row2.at(1), row3.at(2)};
+    if ((win = trywin(chars))) { row1.at(0) = chars[0]; row2.at(1) = chars[1]; row3.at(2) = chars[2]; return; }
+
+    chars = {row1.at(2), row2.at(1), row3.at(0)};
+    if ((win = trywin(chars))) { row1.at(2) = chars[0]; row2.at(1) = chars[1]; row3.at(0) = chars[2]; return; }
+
+    // If no win or block move, make strategic move
+    if (!played && !win) {
+        if (row2.at(1) == '_') row2.at(1) = 'O';
+        else if (row1.at(0) == '_') row1.at(0) = 'O';
+        else if (row1.at(2) == '_') row1.at(2) = 'O';
+        else if (row3.at(2) == '_') row3.at(2) = 'O';
+        else if (row3.at(0) == '_') row3.at(0) = 'O';
+        else if (row3.at(1) == '_') row3.at(1) = 'O';
+        else if (row1.at(1) == '_') row1.at(1) = 'O';
+        else if (row2.at(0) == '_') row2.at(0) = 'O';
+        else if (row2.at(2) == '_') row2.at(2) = 'O';
+    }
+}
+
+void display() {
+    for (char a : row1) cout << a << " "; cout << endl;
+    for (char a : row2) cout << a << " "; cout << endl;
+    for (char a : row3) cout << a << " "; cout << endl;
+}
+
+int main() {
+    cout << "Play your move by entering numbers between 1 to 9\n"
+         << "1 -> top left corner and 9 -> bottom right corner" << endl;
+    cout << "1 2 3\n4 5 6\n7 8 9" << endl;
+
+    int moveCount = 0;
+    cout << "Do you want to play first [y/n]? ";
+    char playFirst;
+    cin >> playFirst;
+
+    if (playFirst == 'n') {
+        cout << "Computer's move ...." << endl;
+        analyse();
+        display();
+        moveCount++;
+    }
+
+    while (moveCount < 9) {
+        cout << "Play move ..." << endl;
+        int move; cin >> move;
+
+        if (move <= 3) row1.at(move - 1) = 'X';
+        else if (move <= 6) row2.at(move - 4) = 'X';
+        else row3.at(move - 7) = 'X';
+
+        moveCount++;
+        if (brk) break;
+
+        display();
+        if (moveCount == 9) break;
+
+        cout << "Computer's move ...." << endl;
+        analyse();
+        display();
+        moveCount++;
+        if (brk) break;
+    }
+
+    if (moveCount == 9) cout << "It's a tie!" << endl;
+    return 0;
+}
