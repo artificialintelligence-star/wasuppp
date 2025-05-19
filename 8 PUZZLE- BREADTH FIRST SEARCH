@@ -1,0 +1,137 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 3;
+
+vector<vector<int>> goalBoard(N, vector<int>(N));
+
+struct PuzzleState {
+    vector<vector<int>> board;
+    PuzzleState* parent;
+
+    PuzzleState(vector<vector<int>> b, PuzzleState* p) {
+        board = b;
+        parent = p;
+    }
+
+    string boardToString() const {
+        string s;
+        for (auto& row : board)
+            for (int num : row)
+                s += to_string(num);
+        return s;
+    }
+
+    bool isGoal() const {
+        return board == goalBoard;
+    }
+
+    void printBoard() const {
+        for (auto& row : board) {
+            for (int num : row)
+                cout << num << " ";
+            cout << endl;
+        }
+        cout << endl;
+    }
+};
+
+vector<PuzzleState*> generateSuccessors(PuzzleState* current) {
+    vector<PuzzleState*> successors;
+    vector<vector<int>> board = current->board;
+
+    int dx[] = {-1, 1, 0, 0}; // up, down, left, right
+    int dy[] = {0, 0, -1, 1};
+    int zeroX = -1, zeroY = -1;
+
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            if (board[i][j] == 0) {
+                zeroX = i;
+                zeroY = j;
+                break;
+            }
+
+    for (int k = 0; k < 4; ++k) {
+        int newX = zeroX + dx[k];
+        int newY = zeroY + dy[k];
+
+        if (newX >= 0 && newX < N && newY >= 0 && newY < N) {
+            vector<vector<int>> newBoard = board;
+            swap(newBoard[zeroX][zeroY], newBoard[newX][newY]);
+            successors.push_back(new PuzzleState(newBoard, current));
+        }
+    }
+
+    return successors;
+}
+
+void printSolutionPath(PuzzleState* state) {
+    vector<PuzzleState*> path;
+    while (state != nullptr) {
+        path.push_back(state);
+        state = state->parent;
+    }
+    reverse(path.begin(), path.end());
+
+    cout << "Solution steps (" << path.size() - 1 << " moves):" << endl;
+    for (auto* step : path)
+        step->printBoard();
+}
+
+void solveBFS(vector<vector<int>>& initialBoard) {
+    queue<PuzzleState*> q;
+    set<string> visited;
+
+    PuzzleState* startState = new PuzzleState(initialBoard, nullptr);
+    q.push(startState);
+    visited.insert(startState->boardToString());
+
+    while (!q.empty()) {
+        PuzzleState* current = q.front();
+        q.pop();
+
+        if (current->isGoal()) {
+            cout << "Goal state reached!" << endl;
+            printSolutionPath(current);
+            return;
+        }
+
+        vector<PuzzleState*> neighbors = generateSuccessors(current);
+        for (PuzzleState* neighbor : neighbors) {
+            string key = neighbor->boardToString();
+            if (visited.find(key) == visited.end()) {
+                q.push(neighbor);
+                visited.insert(key);
+            } else {
+                delete neighbor;
+            }
+        }
+    }
+
+    cout << "No solution found." << endl;
+}
+
+int main() {
+    vector<vector<int>> initialBoard(N, vector<int>(N));
+
+    cout << "Enter the initial board (3x3):" << endl;
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            cin >> initialBoard[i][j];
+
+    cout << "Enter the goal board (3x3):" << endl;
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            cin >> goalBoard[i][j];
+
+    solveBFS(initialBoard);
+
+    return 0;
+}
