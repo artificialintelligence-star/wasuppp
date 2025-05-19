@@ -91,11 +91,12 @@ void solveWaterJarProblem() {
         State current = s.top();
         s.pop();
 
-        // Check if we have reached the target
-        if (current.a == TARGET || current.b == TARGET) {
-            printSolution(current, parent);
-            return;
-        }
+        // Check if the target is achieved only in Jar A
+if (current.a == TARGET) {
+    printSolution(current, parent);
+    return;
+}
+
 
         // Generate all possible next states
         vector<State> nextStates = generateNextStates(current);
