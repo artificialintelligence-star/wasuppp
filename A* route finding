@@ -92,3 +92,15 @@ int main() {
     aStarSearch(grid, startX, startY, endX, endY);
     return 0;
 }
+
+
+Enter number of rows and columns in the grid: 5 5
+Enter grid (0 = free, 1 = obstacle):
+0 0 0 1 0
+0 1 0 1 0
+0 1 0 0 0
+0 0 1 1 0
+0 0 0 0 0
+Enter start coordinates (row col): 0 0
+Enter goal coordinates (row col): 4 4
+
