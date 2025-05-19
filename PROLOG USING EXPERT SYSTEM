@@ -1,0 +1,47 @@
+% expert_system_dual.pl
+
+% Set this to true for interactive mode, false for hardcoded answers
+interactive_mode(false).
+
+% Hardcoded symptoms for john (used if interactive_mode(false))
+%has_symptom(john, fever).
+%has_symptom(john, cough).
+%has_symptom(john, fatigue).
+% For measles example, uncomment below:
+has_symptom(john, rash).
+has_symptom(john, headache).
+
+% Ask symptom: either interactively or via hardcoded facts
+ask_symptom(Person, Symptom) :-
+    interactive_mode(true), !,
+    format('Does ~w have ~w? (yes/no) ', [Person, Symptom]),
+    read(Response),
+    Response == yes.
+
+ask_symptom(Person, Symptom) :-
+    interactive_mode(false),
+    has_symptom(Person, Symptom).
+
+% Disease rules
+has_disease_interactive(Person, flu) :-
+    ask_symptom(Person, fever),
+    ask_symptom(Person, cough),
+    ask_symptom(Person, fatigue).
+
+has_disease_interactive(Person, measles) :-
+    ask_symptom(Person, fever),
+    ask_symptom(Person, rash),
+    ask_symptom(Person, headache).
+
+% Main entry point
+main :-
+    Person = john,
+    format('Diagnosing diseases for ~w~n', [Person]),
+    ( has_disease_interactive(Person, Disease) ->
+        format('Disease diagnosed for ~w: ~w~n', [Person, Disease])
+    ; 
+        format('No disease diagnosed for ~w.~n', [Person])
+    ),
+    halt.
+
+:- initialization(main).
