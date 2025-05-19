@@ -114,11 +114,11 @@ void solveWaterJarProblem() {
         State current = q.front();
         q.pop();
 
-        // If we have reached the target in either jar, print the solution path
-        if (current.a == TARGET || current.b == TARGET) {
-            printSolution(current, parent);
-            return;
-        }
+        // Accept the solution only if Jar A has the target amount
+if (current.a == TARGET) {
+    printSolution(current, parent);
+    return;
+}
 
         // Generate all possible next states
         vector<State> nextStates = generateNextStates(current);
